@@ -10,6 +10,7 @@ import * as Core from './core.js';
 import { createRenderer } from './render.js';
 import { bindInput } from './input.js';
 import { initAudio, sfx } from './audio.js';
+import { DISHES, MAX_START, dishIndex, dishName } from './dishes.js';
 
 const STEP_MS = 1000 / Core.TICK_HZ;
 
@@ -21,13 +22,7 @@ const KITCHENS = [
 const FLAMES = [
   { name: 'Low', note: 'simmer' }, { name: 'Medium', note: 'boil' }, { name: 'High', note: 'rolling' },
 ];
-const DISHES = [
-  'Tomato Soup', 'Chili', 'Minestrone', 'Curry', 'Gumbo', 'Ratatouille', 'Pho', 'Goulash',
-  'Paella', 'Tagine', 'Ramen', 'Bouillabaisse', 'Mole', 'Jambalaya', 'Laksa', 'Borscht',
-  'Cioppino', 'Birria', 'Dal', 'Pozole', 'Rendang', 'Feijoada', 'Cassoulet', 'Vindaloo',
-];
-const MAX_START = 20;
-const dishName = (level) => DISHES[level % DISHES.length];
+const cookbookKey = (kitchenId) => `cookbook-${kitchenId}`;
 
 const $ = (id) => document.getElementById(id);
 const stage = $('stage');
@@ -40,7 +35,7 @@ let acc = 0;
 let loop = null;
 
 // ── sheets ───────────────────────────────────────────────────────────────
-const SHEETS = { menu: 'menu', paused: 'paused', served: 'served', over: 'over' };
+const SHEETS = { menu: 'menu', cookbook: 'cookbook', paused: 'paused', served: 'served', over: 'over' };
 function show(next) {
   mode = next;
   for (const [m, id] of Object.entries(SHEETS)) $(id).hidden = m !== mode;
@@ -75,6 +70,39 @@ function renderBest() {
   $('best').textContent = best
     ? `${k.name} best: ${best.value.toLocaleString()}${far ? ` · dish ${far.value} served` : ''}`
     : '';
+}
+
+function renderCookbook() {
+  const k = KITCHENS[prefs.kitchen];
+  const book = Arcade.stats.get(cookbookKey(k.id));
+  const list = $('cookbook-list');
+  const cooked = Object.keys(book).length;
+  $('cookbook-kitchen').textContent = `${k.name} — ${cooked} of ${DISHES.length} dishes served.`;
+  list.textContent = '';
+  DISHES.forEach((name, i) => {
+    const entry = book[i];
+    const row = document.createElement('div');
+    row.className = entry ? 'dish cooked' : 'dish unmade';
+    const label = document.createElement('span');
+    label.className = 'dish-name';
+    label.textContent = name;
+    const meta = document.createElement('span');
+    meta.className = 'dish-meta';
+    meta.textContent = entry
+      ? `${entry.times}× · best ${entry.best.toLocaleString()}`
+      : 'not yet served';
+    row.append(label, meta);
+    list.append(row);
+  });
+}
+
+function recordCookbook() {
+  const k = KITCHENS[prefs.kitchen];
+  const dish = dishIndex(s.level);
+  Arcade.stats.update(cookbookKey(k.id), (prev) => {
+    const cur = prev[dish] || { times: 0, best: 0 };
+    return { ...prev, [dish]: { times: cur.times + 1, best: Math.max(cur.best, s.score) } };
+  });
 }
 
 function renderHud() {
@@ -139,6 +167,7 @@ function drain(now) {
       case 'won': {
         sfx('won');
         record();
+        recordCookbook();
         const k = KITCHENS[prefs.kitchen];
         Arcade.records.best(`dishes-${k.id}`, {
           value: s.level + 1, direction: 'higher', format: 'integer', label: `${k.name} — furthest dish served`,
@@ -225,6 +254,8 @@ async function boot() {
   }
 
   $('play').addEventListener('click', () => startNew(prefs.level));
+  $('cookbook-open').addEventListener('click', () => { renderCookbook(); show('cookbook'); });
+  $('cookbook-back').addEventListener('click', () => show('menu'));
   $('continue').addEventListener('click', () => {
     const run = Arcade.state.get('run');
     if (!run || !run.s) return openMenu();

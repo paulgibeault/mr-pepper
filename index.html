@@ -65,6 +65,7 @@
 
       <button class="primary" id="play" type="button">Start cooking</button>
       <p class="best" id="best"></p>
+      <button class="ghost" id="cookbook-open" type="button">Cookbook</button>
 
       <details class="how">
         <summary>How to cook</summary>
@@ -76,6 +77,13 @@
           <li>Chains fill your mill. A full mill puts a <b>peppercorn</b> in your next pinch — it matches anything.</li>
         </ul>
       </details>
+    </section>
+
+    <section class="sheet" id="cookbook" hidden>
+      <h2>Cookbook</h2>
+      <p class="lede" id="cookbook-kitchen"></p>
+      <div class="cookbook-list" id="cookbook-list"></div>
+      <button class="primary" id="cookbook-back" type="button">Back to the menu</button>
     </section>
 
     <section class="sheet small" id="paused" hidden>

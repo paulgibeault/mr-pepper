@@ -31,6 +31,12 @@ await page.goto(url);
 await page.waitForFunction(() => window.__pepper);
 await shot('1-menu');
 
+// the cookbook starts empty, one row per dish, nothing cooked
+await page.click('#cookbook-open');
+assert.equal(await page.textContent('#cookbook-kitchen'), 'Home Kitchen — 0 of 24 dishes served.');
+assert.equal(await page.$$eval('.dish.cooked', (els) => els.length), 0);
+await page.click('#cookbook-back');
+
 // menu → play
 await page.click('#kitchen button:nth-child(3)');
 for (let i = 0; i < 4; i++) await page.click('#level-up');
@@ -103,8 +109,18 @@ assert.equal(saved.records['score-market'], 1400);
 assert.equal(saved.records['dishes-market'], 5);
 assert.equal(saved.run, null, 'a boiled-over run is not resumable');
 
-// a run in progress survives a reload, and resumes paused
-await page.click('#retry');
+// the served dish now shows up in the cookbook, by dish identity not level
+await page.click('#to-menu');
+await page.click('#cookbook-open');
+assert.equal(await page.textContent('#cookbook-kitchen'), 'Spice Market — 1 of 24 dishes served.');
+const rows = await page.$$eval('.dish', (els) => els.map((e) => e.textContent));
+assert.match(rows[4], /Gumbo1× · best 1,400/);       // dish index 4: the one just served
+assert.match(rows[1], /Chilinot yet served/);
+await page.click('#cookbook-back');
+
+// a run in progress survives a reload, and resumes paused (same kitchen/level
+// prefs as before, so this is equivalent to the old '#retry' on the over sheet)
+await page.click('#play');
 await waitMode('play');
 await page.reload();
 await page.waitForFunction(() => window.__pepper);

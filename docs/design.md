@@ -52,20 +52,26 @@ left/right half to turn, drag down to soft-drop, flick down to throw. A resting
 pinch gets at least 26 ticks of slide time however hot the flame; a soft drop
 locks on contact. Keys: ← → ↓, ↑/X and Z, Space, P.
 
-## Built (this pass)
+## Built
 
-Core + 14 rule tests; canvas renderer; touch + keyboard; menu / pause / served
-/ boiled-over; run saved on suspend and resumed *paused*; `Arcade.records` for
+Core + rule tests; canvas renderer; touch + keyboard; menu / pause / served /
+boiled-over; run saved on suspend and resumed *paused*; `Arcade.records` for
 best score and furthest dish per kitchen; reduced-motion and power-saver gate
-the ambient motion; first-pass sound pack; headless smoke test.
+the ambient motion; a sound pack (playtested 2026-09-19 — fine as shipped, no
+workbench audition asked for); fleet CI/CD (catalog entry, Pages via GitHub
+Actions); headless end-to-end test (`tools/e2e.mjs`).
+
+**The cookbook** (2026-09-19). One `Arcade.stats` category per kitchen
+(`cookbook-<id>`), keyed by the dish's position in `dishes.js`'s list — not by
+level, which keeps climbing past the list and wraps (`dishName`). A win
+records `{ times, best }` for that dish; the sheet lists all 24, served ones
+lit with their count and best score, the rest dimmed as "not yet served". Pure
+data lives in `dishes.js` (no DOM, no Arcade) so it can be unit tested on its
+own; `main.js` is the only place that touches `Arcade.stats` for it.
 
 ## Next
 
-- **Playtest the touch controls** — the go/no-go. Tunables live at the top of
-  `input.js` (step 0.85 cell, flick 0.012 cell/ms) and `core.js`.
-- **Audio pass on the workbench** — the pack has not been auditioned. Add a
-  simmer bed (`stream`, retuned by heat).
-- Cookbook (dishes served, per kitchen) and recipe-shaped stockings.
+- Recipe-shaped stockings (a dish's flavor mix leaning toward its theme).
 - *Mise en place* (untimed, N pinches) and the *Daily Special* (one seed a day).
 - Fleet: catalog entry (`inDevelopment: true`), CI, acceptance run.
 - Later: versus (over-salting), cookware, optional tilt.

@@ -12,6 +12,7 @@ ingredients; season them all to serve the dish. A game for
 | File | What it is |
 |---|---|
 | `core.js` | The rules: a seeded, fixed-tick state machine. No DOM, no clock. |
+| `dishes.js` | The recipe names and the level → dish mapping. No DOM, no Arcade. |
 | `render.js` | The pot, drawn on one canvas. Reads state, never writes it. |
 | `input.js` | Touch gestures and keys → core commands. |
 | `main.js` | The clock, the sheets, and the Arcade SDK contract. |

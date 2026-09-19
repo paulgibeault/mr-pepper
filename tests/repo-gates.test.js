@@ -84,13 +84,13 @@ test('sw.js cleans up only its own caches and never activates unannounced', () =
 
 // ── staging declaration ──────────────────────────────────────────────────
 test('stage.mjs publishes what the page and manifest name, and drops the dev set', () => {
-  for (const f of ['index.html', 'main.js', 'core.js', 'render.js', 'input.js', 'audio.js',
+  for (const f of ['index.html', 'main.js', 'core.js', 'dishes.js', 'render.js', 'input.js', 'audio.js',
     'soundpack.js', 'style.css', 'manifest.json', 'sw.js', 'icon.svg', 'icon.png']) {
     assert.ok(tracked.includes(f), `${f} is not tracked`);
     assert.ok(!isDevOnly(f), `${f} would be dropped from the deploy`);
   }
   for (const f of ['README.md', 'package.json', '.gitignore', 'docs/design.md', 'tools/stage.mjs',
-    'tools/e2e.mjs', 'tests/core.test.js', '.github/workflows/pages.yml']) {
+    'tools/e2e.mjs', 'tests/core.test.js', 'tests/dishes.test.js', '.github/workflows/pages.yml']) {
     assert.ok(isDevOnly(f), `${f} would ship to the public site`);
   }
   assert.deepEqual(PRECACHE_EXCLUDE, ['LICENSE'], 'the exclusion list is meant to stay minimal');
