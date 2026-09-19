@@ -1,9 +1,9 @@
 {
   "name": "mr-pepper",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
-  "description": "Mr Pepper \u2014 throw pairs of spices into the pot and season every ingredient.",
+  "description": "Mr Pepper — throw pairs of spices into the pot and season every ingredient.",
   "engines": {
     "node": ">=24"
   },
