@@ -1,7 +1,7 @@
-/* tools/smoke.mjs — drive the real page in headless Chromium.
+/* tools/e2e.mjs — drive the real page in headless Chromium.
  *
  *   ./dev.sh ../dr-pepper                      (from the launcher repo)
- *   node tools/smoke.mjs [url] [screenshot-dir]
+ *   node tools/e2e.mjs [url] [screenshot-dir]
  *
  * Playwright is borrowed from the launcher checkout next door (it is the
  * fleet's only browser-test dependency); set ARCADE_LAUNCHER to point at it.

@@ -3,11 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Mr Pepper — throw pairs of spices into the pot and season every ingredient.",
+  "description": "Mr Pepper \u2014 throw pairs of spices into the pot and season every ingredient.",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
-    "test": "node --test 'tests/*.test.js'"
+    "test": "node tools/verify-artifact.mjs && node --test 'tests/*.test.js'",
+    "stage": "node tools/stage.mjs dist",
+    "e2e": "node tools/e2e.mjs"
   }
 }
