@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1a1412">
+  <title>Mr Pepper</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- The Arcade SDK, root-relative and evergreen (GAME_INTEGRATION §2), then
+       the optional audio element library the sound pack is built from, then
+       the pack itself (a plain script, so the launcher's soundpack workbench
+       can load the very same file). -->
+  <script src="/arcade-sdk.js"></script>
+  <script src="/arcade-audio.js"></script>
+  <script src="soundpack.js"></script>
+  <script>
+    Arcade.init({ gameId: 'mr-pepper' });
+  </script>
+</head>
+<body>
+  <main class="stage" id="stage">
+    <!-- One canvas under everything: the pot, the flame, and the pinch in
+         your hand (drawn on the canvas so it can be thrown into the pot). -->
+    <canvas id="view" aria-label="The pot"></canvas>
+
+    <!-- The order rail. Text only; the middle is left clear for the hand. -->
+    <header class="rail" id="rail" hidden>
+      <div class="ticket">
+        <span class="ticket-level" id="hud-level">Dish 1</span>
+        <span class="ticket-dish" id="hud-dish"></span>
+      </div>
+      <div class="tally">
+        <span class="tally-score" id="hud-score">0</span>
+        <span class="tally-left"><span id="hud-left">0</span> to season</span>
+      </div>
+      <button class="pause" id="pause" type="button" aria-label="Pause">II</button>
+    </header>
+
+    <!-- Menu: the kitchen, the flame, the dish to start on. -->
+    <section class="sheet" id="menu" hidden>
+      <h1>Mr Pepper</h1>
+      <p class="lede">Order up, Mr Pepper. Season every ingredient in the pot.</p>
+
+      <button class="primary" id="continue" type="button" hidden>Back to the pot</button>
+
+      <div class="field">
+        <span class="label" id="kitchen-label">Kitchen</span>
+        <div class="seg" id="kitchen" role="radiogroup" aria-labelledby="kitchen-label"></div>
+      </div>
+      <div class="field">
+        <span class="label" id="flame-label">Flame</span>
+        <div class="seg" id="flame" role="radiogroup" aria-labelledby="flame-label"></div>
+      </div>
+      <div class="field">
+        <span class="label" id="level-label">Start at dish</span>
+        <div class="stepper" role="group" aria-labelledby="level-label">
+          <button type="button" id="level-down" aria-label="Earlier dish">−</button>
+          <output id="level">1</output>
+          <button type="button" id="level-up" aria-label="Later dish">+</button>
+        </div>
+      </div>
+
+      <button class="primary" id="play" type="button">Start cooking</button>
+      <p class="best" id="best"></p>
+
+      <details class="how">
+        <summary>How to cook</summary>
+        <ul>
+          <li>Line up <b>four of a flavor</b> — spices and ingredients both count — and they dissolve.</li>
+          <li>Season every ingredient to serve the dish. Let the pot fill to the rim and it boils over.</li>
+          <li><b>Drag</b> sideways to move. <b>Tap</b> the left or right half to turn. <b>Drag down</b> to drop faster, <b>flick down</b> to throw.</li>
+          <li>Keys: ← → move, ↓ drop, ↑ / X and Z turn, Space throws, P pauses.</li>
+          <li>Chains fill your mill. A full mill puts a <b>peppercorn</b> in your next pinch — it matches anything.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="sheet small" id="paused" hidden>
+      <h2>Off the heat</h2>
+      <button class="primary" id="resume" type="button">Back to the pot</button>
+      <button class="ghost" id="quit" type="button">Leave the kitchen</button>
+    </section>
+
+    <section class="sheet small" id="served" hidden>
+      <h2>Served!</h2>
+      <p class="lede" id="served-dish"></p>
+      <p class="big" id="served-score"></p>
+      <button class="primary" id="next" type="button">Next dish</button>
+    </section>
+
+    <section class="sheet small" id="over" hidden>
+      <h2>Boiled over</h2>
+      <p class="lede" id="over-dish"></p>
+      <p class="big" id="over-score"></p>
+      <button class="primary" id="retry" type="button">Same dish again</button>
+      <button class="ghost" id="to-menu" type="button">Leave the kitchen</button>
+    </section>
+  </main>
+
+  <script type="module" src="main.js"></script>
+
+  <!-- Offline play. Loopback-guarded so local edits are never masked by a
+       stale cache (matches the launcher). -->
+  <script>
+    if ('serviceWorker' in navigator &&
+        !/^(127\.|localhost$|0\.0\.0\.0$|::1$)/.test(location.hostname)) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: '/mr-pepper/' })
+          .catch((err) => console.warn('SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>

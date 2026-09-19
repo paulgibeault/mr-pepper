@@ -1,0 +1,13 @@
+{
+  "name": "mr-pepper",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Mr Pepper — throw pairs of spices into the pot and season every ingredient.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test 'tests/*.test.js'"
+  }
+}

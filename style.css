@@ -1,0 +1,157 @@
+/* Mr Pepper — one dark kitchen, on purpose: the pot is lit by its own flame,
+   so there is no light theme to switch to. Text is in rem, so the launcher's
+   font scale applies for free. */
+
+:root {
+  --ink: #f3ebe2;
+  --ink-dim: #b9aa9b;
+  --ground: #16110f;
+  --sheet: rgba(30, 23, 20, 0.94);
+  --line: rgba(255, 255, 255, 0.12);
+  --accent: #f0b429;
+  --accent-ink: #231a05;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+/* .sheet and .rail set display:flex, which would otherwise beat [hidden]. */
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stage {
+  position: fixed;
+  inset: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow: hidden;
+}
+
+#view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+/* ── the order rail ─────────────────────────────────────────────────── */
+.rail {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: var(--rail-h, 64px);
+  padding: 0 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.ticket, .tally {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+/* leave the middle third clear: the pinch in your hand is drawn there */
+.ticket { padding-right: 18%; }
+.tally { padding-left: 18%; text-align: right; font-variant-numeric: tabular-nums; }
+.ticket-level, .tally-score { font-size: 1.05rem; font-weight: 700; }
+.ticket-dish, .tally-left {
+  font-size: 0.75rem; color: var(--ink-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pause {
+  pointer-events: auto;
+  flex: 0 0 auto;
+  width: 2.6rem; height: 2.6rem;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  font-weight: 800; letter-spacing: 0.1em;
+  font-size: 0.85rem;
+}
+
+/* ── sheets ─────────────────────────────────────────────────────────── */
+.sheet {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 26rem);
+  max-height: 92%;
+  overflow-y: auto;
+  padding: 1.4rem 1.25rem 1.25rem;
+  border-radius: 1.1rem;
+  background: var(--sheet);
+  border: 1px solid var(--line);
+  box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  text-align: center;
+}
+.sheet.small { width: min(86vw, 20rem); }
+h1, h2 { margin: 0; letter-spacing: 0.01em; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.5rem; }
+.lede { margin: 0; color: var(--ink-dim); font-size: 0.95rem; }
+.big { margin: 0; font-size: 1.9rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.best { margin: 0; min-height: 1em; font-size: 0.8rem; color: var(--ink-dim); }
+
+.field { display: flex; flex-direction: column; gap: 0.35rem; text-align: left; }
+.label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-dim); }
+
+.seg { display: flex; gap: 0.3rem; }
+.seg button {
+  flex: 1 1 0;
+  padding: 0.6rem 0.3rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font: inherit; font-size: 0.85rem; line-height: 1.2;
+}
+.seg button small { display: block; color: var(--ink-dim); font-size: 0.7rem; }
+.seg button[aria-checked="true"] { border-color: var(--accent); background: rgba(240, 180, 41, 0.16); }
+
+.stepper { display: flex; align-items: center; gap: 0.5rem; }
+.stepper button {
+  width: 2.8rem; height: 2.6rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font-size: 1.3rem;
+}
+.stepper output { flex: 1; text-align: center; font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+button { cursor: pointer; touch-action: manipulation; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.primary {
+  padding: 0.85rem 1rem;
+  border: 0; border-radius: 0.8rem;
+  background: var(--accent); color: var(--accent-ink);
+  font: inherit; font-size: 1.05rem; font-weight: 800;
+}
+.ghost {
+  padding: 0.7rem 1rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--line);
+  background: transparent; color: var(--ink);
+  font: inherit; font-size: 0.95rem;
+}
+
+.how { text-align: left; font-size: 0.85rem; color: var(--ink-dim); }
+.how summary { cursor: pointer; color: var(--ink); padding: 0.3rem 0; }
+.how ul { margin: 0.4rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.how b { color: var(--ink); }
