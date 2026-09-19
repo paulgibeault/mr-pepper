@@ -1,6 +1,6 @@
 {
   "name": "mr-pepper",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "type": "module",
   "description": "Mr Pepper — throw pairs of spices into the pot and season every ingredient.",
