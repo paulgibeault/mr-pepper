@@ -3,6 +3,7 @@
  *   drag sideways      move, one column per ~cell of travel (relative, so
  *                      your finger never has to cover the pinch)
  *   tap left / right   turn counter-clockwise / clockwise
+ *   press and hold     soft drop, until you let go — no full slam
  *   drag down & hold   soft drop, until you let go
  *   flick down         throw it to the bottom
  *
@@ -12,6 +13,7 @@
 
 const TAP_MS = 300;
 const TAP_SLOP = 10;
+const HOLD_MS = 200;
 const DAS_MS = 170;
 const ARR_MS = 45;
 
@@ -24,7 +26,15 @@ export function bindInput(el, { emit, cell, onPause, active }) {
       id: e.pointerId, t0: e.timeStamp, x0: e.clientX, y0: e.clientY,
       stepX: e.clientX, softY: e.clientY, moved: false, soft: false,
       trail: [{ x: e.clientX, y: e.clientY, t: e.timeStamp }],
+      holdTimer: 0,
     };
+    // A finger that just sits there for a beat drops faster too — no drag needed.
+    const held = g;
+    held.holdTimer = setTimeout(() => {
+      if (g !== held || held.soft) return;
+      held.soft = true;
+      emit('softOn');
+    }, HOLD_MS);
     try { el.setPointerCapture(e.pointerId); } catch { /* not fatal */ }
     e.preventDefault();
   });
@@ -33,6 +43,7 @@ export function bindInput(el, { emit, cell, onPause, active }) {
     if (!g || e.pointerId !== g.id) return;
     const c = cell();
     const step = c * 0.85;
+    if (Math.hypot(e.clientX - g.x0, e.clientY - g.y0) > TAP_SLOP) clearTimeout(g.holdTimer);
     while (e.clientX - g.stepX >= step) { emit('right'); g.stepX += step; g.moved = true; g.softY = e.clientY; }
     while (g.stepX - e.clientX >= step) { emit('left'); g.stepX -= step; g.moved = true; g.softY = e.clientY; }
     if (!g.soft && e.clientY - g.softY > c * 1.1) { g.soft = true; emit('softOn'); }
@@ -44,7 +55,11 @@ export function bindInput(el, { emit, cell, onPause, active }) {
     if (!g || e.pointerId !== g.id) return;
     const c = cell();
     const done = g; g = null;
-    if (done.soft) emit('softOff');
+    clearTimeout(done.holdTimer);
+    // Already soft-dropping (drag or hold) — that alone may have locked the
+    // piece early, so releasing just ends the drop. It never also reads as a
+    // flick, or the next piece can get hard-dropped in the same gesture.
+    if (done.soft) { emit('softOff'); return; }
     if (e.type === 'pointercancel') return;
     // a flick: fast and mostly downward over the last ~120 ms
     const then = done.trail.find((p) => e.timeStamp - p.t <= 120) || done.trail[0];
@@ -52,7 +67,7 @@ export function bindInput(el, { emit, cell, onPause, active }) {
     const dy = e.clientY - then.y, dx = e.clientX - then.x;
     if (dy > c * 0.8 && dy / dt > c * 0.012 && Math.abs(dx) < dy * 0.6) { emit('hard'); return; }
     const still = Math.hypot(e.clientX - done.x0, e.clientY - done.y0) < TAP_SLOP;
-    if (!done.moved && !done.soft && still && e.timeStamp - done.t0 < TAP_MS) {
+    if (!done.moved && still && e.timeStamp - done.t0 < TAP_MS) {
       const r = el.getBoundingClientRect();
       emit(e.clientX < r.left + r.width / 2 ? 'ccw' : 'cw');
     }
