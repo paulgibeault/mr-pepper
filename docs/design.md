@@ -69,6 +69,40 @@ lit with their count and best score, the rest dimmed as "not yet served". Pure
 data lives in `dishes.js` (no DOM, no Arcade) so it can be unit tested on its
 own; `main.js` is the only place that touches `Arcade.stats` for it.
 
+**The kitchen redesign** (2026-09-20). A copper pot in a dark kitchen, lit by
+its own burner. What changed and why it is built the way it is:
+
+- *The order ticket.* The rail's left side is a clipped paper ticket — order
+  number, dish, a progress bar, how many are left to season — and the same
+  paper comes back full-size as the served / boiled-over receipt (ingredients,
+  pinches thrown, longest chain, score, "new best for this dish"). `core.js`
+  carries `s.total` and `s.maxChain` for it; older saves lack them and the HUD
+  falls back.
+- *Twine that holds.* A cord lying over two round rims would slip straight
+  off, so each bowl has a brass ring riveted to its rim, facing its partner;
+  the cord runs through both and is knotted between. The rings belong to the
+  cord (`drawTwine`), so bowl sprites stay symmetric, and a cut takes rings and
+  knot together.
+- *The tell and the drop lane.* When the drop in hand would make four, its
+  landing ring turns solid and the run lights up (`landingMatches` in core:
+  the ordinary match scan run on a copy of the grid — no new rule). Worked out
+  once per position of the pinch, not per frame.
+- *A gas ring, not a campfire.* Jets fan outward from a cap, clean blue; only
+  a low flame tips orange (gone by `heat` 0.3). Two alternating groups sit
+  still for ~2/3 of a 7 s / 9 s cycle and swell once.
+- *Painted art, drawn fallbacks.* `assets/` holds the wall, the hammered
+  copper and five ingredients (WebP, ~110 KB with the fonts). Nothing waits on
+  them: every image has a vector or flat-colour stand-in.
+- *Battery.* `scene.js` paints everything still into one offscreen canvas
+  (repainted on resize, art arriving, or the broth taking colour); `draw()`
+  builds a key from whatever the picture depends on and returns early when it
+  has not changed — a pinch hanging between ticks costs nothing. Measured: ~46
+  of 300 frames painted over 5 s of a falling pinch. Ingredients no longer bob.
+- *Modules.* `render.js` orchestrates; `scene.js` (still things), `sprites.js`
+  (pieces, in a 0..1 box, plus the menu's SVG glyphs), `flame.js`, `assets.js`.
+- Fonts are self-hosted (Young Serif, DM Mono; OFL texts beside them) because
+  the game must boot offline.
+
 ## Next
 
 - Recipe-shaped stockings (a dish's flavor mix leaning toward its theme).

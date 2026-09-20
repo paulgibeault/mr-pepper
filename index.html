@@ -7,6 +7,7 @@
   <title>Mr Pepper</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/young-serif-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 
   <!-- The Arcade SDK, root-relative and evergreen (GAME_INTEGRATION §2), then
@@ -26,46 +27,63 @@
          your hand (drawn on the canvas so it can be thrown into the pot). -->
     <canvas id="view" aria-label="The pot"></canvas>
 
-    <!-- The order rail. Text only; the middle is left clear for the hand. -->
+    <!-- The order rail: the ticket, what is in your hand, the tally. The
+         middle is left clear — the next pinch and the mill are drawn there,
+         on the canvas, so the pinch can be thrown from it into the pot. -->
     <header class="rail" id="rail" hidden>
-      <div class="ticket">
-        <span class="ticket-level" id="hud-level">Dish 1</span>
+      <div class="ticket paper">
+        <span class="mono ticket-order" id="hud-level">Order 01</span>
         <span class="ticket-dish" id="hud-dish"></span>
+        <span class="ticket-bar"><span id="hud-bar"></span></span>
+        <span class="mono ticket-left"><b id="hud-left">0</b> to season</span>
       </div>
+      <div class="hand mono">Next</div>
       <div class="tally">
-        <span class="tally-score" id="hud-score">0</span>
-        <span class="tally-left"><span id="hud-left">0</span> to season</span>
+        <span class="mono tally-score" id="hud-score">0</span>
+        <span class="mono tally-best" id="hud-best"></span>
       </div>
-      <button class="pause" id="pause" type="button" aria-label="Pause">II</button>
+      <button class="pause" id="pause" type="button" aria-label="Pause">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+      </button>
     </header>
 
-    <!-- Menu: the kitchen, the flame, the dish to start on. -->
-    <section class="sheet" id="menu" hidden>
-      <h1>Mr Pepper</h1>
-      <p class="lede">Order up, Mr Pepper. Season every ingredient in the pot.</p>
+    <!-- What a run was worth, rising from where it dissolved. One element,
+         re-used; it animates once per clear and then does nothing. -->
+    <div class="callout" id="callout" aria-hidden="true"><span id="callout-title"></span><span class="mono" id="callout-points"></span></div>
 
-      <button class="primary" id="continue" type="button" hidden>Back to the pot</button>
+    <!-- Menu: the kitchen, the flame, the dish to start on. -->
+    <section class="sheet menu" id="menu" hidden>
+      <header class="masthead">
+        <span class="mono eyebrow">Order up</span>
+        <h1>Mr Pepper</h1>
+        <p class="lede">Season every ingredient in the pot before it boils over.</p>
+      </header>
+
+      <button class="paper strip" id="continue" type="button" hidden>
+        <span><span class="mono" id="continue-order">On the stove</span><span class="strip-dish" id="continue-dish">Back to the pot</span></span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
 
       <div class="field">
-        <span class="label" id="kitchen-label">Kitchen</span>
+        <span class="label mono" id="kitchen-label">Kitchen</span>
         <div class="seg" id="kitchen" role="radiogroup" aria-labelledby="kitchen-label"></div>
       </div>
       <div class="field">
-        <span class="label" id="flame-label">Flame</span>
+        <span class="label mono" id="flame-label">Flame</span>
         <div class="seg" id="flame" role="radiogroup" aria-labelledby="flame-label"></div>
       </div>
       <div class="field">
-        <span class="label" id="level-label">Start at dish</span>
+        <span class="label mono" id="level-label">Start at</span>
         <div class="stepper" role="group" aria-labelledby="level-label">
           <button type="button" id="level-down" aria-label="Earlier dish">−</button>
-          <output id="level">1</output>
+          <output id="level"><span class="mono" id="level-note"></span><span class="level-dish" id="level-dish"></span></output>
           <button type="button" id="level-up" aria-label="Later dish">+</button>
         </div>
       </div>
 
       <button class="primary" id="play" type="button">Start cooking</button>
-      <p class="best" id="best"></p>
       <button class="ghost" id="cookbook-open" type="button">Cookbook</button>
+      <p class="best mono" id="best"></p>
 
       <details class="how">
         <summary>How to cook</summary>
@@ -74,6 +92,7 @@
           <li>Season every ingredient to serve the dish. Let the pot fill to the rim and it boils over.</li>
           <li><b>Drag</b> sideways to move. <b>Tap</b> the left or right half to turn. <b>Drag down</b> to drop faster, <b>flick down</b> to throw.</li>
           <li>Keys: ← → move, ↓ drop, ↑ / X and Z turn, Space throws, P pauses.</li>
+          <li>When a drop would make four, its landing ring turns solid and the run lights up.</li>
           <li>Chains fill your mill. A full mill puts a <b>peppercorn</b> in your next pinch — it matches anything.</li>
         </ul>
       </details>
@@ -92,17 +111,32 @@
       <button class="ghost" id="quit" type="button">Leave the kitchen</button>
     </section>
 
-    <section class="sheet small" id="served" hidden>
-      <h2>Served!</h2>
-      <p class="lede" id="served-dish"></p>
-      <p class="big" id="served-score"></p>
-      <button class="primary" id="next" type="button">Next dish</button>
+    <!-- Served and boiled over are the same order ticket, stamped differently. -->
+    <section class="sheet bare small" id="served" hidden>
+      <div class="paper receipt">
+        <span class="stamp mono">Served</span>
+        <span class="mono receipt-order" id="served-order"></span>
+        <h2 id="served-name"></h2>
+        <p class="receipt-note" id="served-dish"></p>
+        <dl class="mono receipt-lines">
+          <div><dt>Ingredients seasoned</dt><dd id="served-ings"></dd></div>
+          <div><dt>Pinches thrown</dt><dd id="served-pinches"></dd></div>
+          <div><dt>Longest chain</dt><dd id="served-chain"></dd></div>
+        </dl>
+        <div class="receipt-total"><span class="mono">Score</span><span class="mono big" id="served-score"></span></div>
+        <p class="mono receipt-best" id="served-best"></p>
+      </div>
+      <button class="primary" id="next" type="button">Next order</button>
     </section>
 
-    <section class="sheet small" id="over" hidden>
-      <h2>Boiled over</h2>
-      <p class="lede" id="over-dish"></p>
-      <p class="big" id="over-score"></p>
+    <section class="sheet bare small" id="over" hidden>
+      <div class="paper receipt">
+        <span class="stamp mono">Boiled over</span>
+        <span class="mono receipt-order" id="over-order"></span>
+        <h2 id="over-name"></h2>
+        <p class="receipt-note" id="over-dish"></p>
+        <div class="receipt-total"><span class="mono">Score</span><span class="mono big" id="over-score"></span></div>
+      </div>
       <button class="primary" id="retry" type="button">Same dish again</button>
       <button class="ghost" id="to-menu" type="button">Leave the kitchen</button>
     </section>

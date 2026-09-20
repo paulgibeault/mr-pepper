@@ -8,20 +8,23 @@
 
 import * as Core from './core.js';
 import { createRenderer } from './render.js';
+import { FLAVORS, glyphSvg, jetSvg } from './sprites.js';
 import { bindInput } from './input.js';
 import { initAudio, sfx } from './audio.js';
 import { DISHES, MAX_START, dishIndex, dishName } from './dishes.js';
 
 const STEP_MS = 1000 / Core.TICK_HZ;
 
+// `marks` is the picture on each choice: a kitchen shows the flavors it cooks
+// with (the same shapes as in the pot), a flame shows its jets.
 const KITCHENS = [
-  { id: 'home',   name: 'Home Kitchen', note: '3 flavors', flavors: 3 },
-  { id: 'bistro', name: 'Bistro',       note: '4 flavors', flavors: 4 },
-  { id: 'market', name: 'Spice Market', note: '5 flavors', flavors: 5 },
-];
-const FLAMES = [
-  { name: 'Low', note: 'simmer' }, { name: 'Medium', note: 'boil' }, { name: 'High', note: 'rolling' },
-];
+  { id: 'home',   name: 'Home Kitchen', flavors: 3 },
+  { id: 'bistro', name: 'Bistro',       flavors: 4 },
+  { id: 'market', name: 'Spice Market', flavors: 5 },
+].map((k) => ({ ...k, note: `${k.flavors} flavors`, marks: FLAVORS.slice(0, k.flavors).map((_, f) => glyphSvg(f)).join('') }));
+const FLAMES = ['Low', 'Medium', 'High'].map((name, i) => ({
+  name, note: `${Core.FLAME_POINTS[i]} a seasoning`, marks: jetSvg(i === 0).repeat(i + 1),
+}));
 const cookbookKey = (kitchenId) => `cookbook-${kitchenId}`;
 
 const $ = (id) => document.getElementById(id);
@@ -33,6 +36,7 @@ let mode = 'menu';            // menu | play | paused | served | over
 let prefs = { kitchen: 0, flame: 1, level: 0 };
 let acc = 0;
 let loop = null;
+let seenScore = 0;             // the score as of the last clear, for the callout
 
 // ── sheets ───────────────────────────────────────────────────────────────
 const SHEETS = { menu: 'menu', cookbook: 'cookbook', paused: 'paused', served: 'served', over: 'over' };
@@ -49,7 +53,10 @@ function segmented(el, items, get, set) {
     const b = document.createElement('button');
     b.type = 'button';
     b.setAttribute('role', 'radio');
-    b.append(it.name);
+    const marks = document.createElement('span');
+    marks.className = 'marks';
+    marks.innerHTML = it.marks;                       // our own constant markup
+    b.append(marks, it.name);
     const small = document.createElement('small');
     small.textContent = it.note;
     b.append(small);
@@ -105,12 +112,34 @@ function recordCookbook() {
   });
 }
 
+const orderNo = (level) => `Order ${String(level + 1).padStart(2, '0')}`;
+
 function renderHud() {
   if (!s) return;
-  $('hud-level').textContent = `Dish ${s.level + 1}`;
+  const left = Math.max(0, s.remaining), total = s.total || left || 1;   // `total`: absent in older saves
+  $('hud-level').textContent = orderNo(s.level);
   $('hud-dish').textContent = dishName(s.level);
   $('hud-score').textContent = s.score.toLocaleString();
-  $('hud-left').textContent = String(Math.max(0, s.remaining));
+  $('hud-left').textContent = String(left);
+  $('hud-bar').style.width = `${Math.round((1 - left / total) * 100)}%`;
+  const best = Arcade.records.get(`score-${KITCHENS[prefs.kitchen].id}`);
+  $('hud-best').textContent = best ? `Best ${best.value.toLocaleString()}` : '';
+}
+
+/* What the run just cleared was worth, rising from where it dissolved. */
+function callout(e, gained) {
+  if (gained <= 0 && e.chain < 2) return;
+  const el = $('callout'), at = R.centreOf(s, e.cells);
+  const F = FLAVORS[e.flavors[0]] || FLAVORS[0];
+  $('callout-title').textContent = e.chain > 1 ? `Chain ×${e.chain}` : '';
+  $('callout-points').textContent = gained > 0 ? `+${gained.toLocaleString()}` : '';
+  el.style.setProperty('--glow', F.color);
+  el.style.setProperty('--tone', F.light);
+  const x = Math.max(76, Math.min(R.layout.W - 76, at.x));      // keep it on the screen
+  el.style.transform = `translate(${Math.round(x)}px, ${Math.round(at.y)}px) translate(-50%, -120%)`;
+  el.classList.remove('go');
+  void el.offsetWidth;                              // restart the one-shot animation
+  el.classList.add('go');
 }
 
 // ── runs ─────────────────────────────────────────────────────────────────
@@ -133,6 +162,7 @@ function record() {
 function begin(state) {
   s = state;
   s.events = [];
+  seenScore = s.score;
   R.freshBroth();
   R.view.spawnAt = performance.now();
   fit();
@@ -161,19 +191,29 @@ function drain(now) {
       case 'clear':
         sfx('clear', { chain: e.chain, ings: e.ings });
         R.dissolved(s, e.cells);
+        callout(e, s.score - seenScore);
+        seenScore = s.score;
         if (e.chain > 1) R.view.flash = Math.min(1, 0.4 + e.chain * 0.2);
         renderHud();
         break;
       case 'won': {
         sfx('won');
         record();
-        recordCookbook();
         const k = KITCHENS[prefs.kitchen];
         Arcade.records.best(`dishes-${k.id}`, {
           value: s.level + 1, direction: 'higher', format: 'integer', label: `${k.name} — furthest dish served`,
         });
-        $('served-dish').textContent = `${dishName(s.level)}, table ${1 + (s.rng % 12)}.`;
+        const was = Arcade.stats.get(cookbookKey(k.id))[dishIndex(s.level)];
+        recordCookbook();
+        $('served-order').textContent = `${orderNo(s.level)} · ${k.name}`;
+        $('served-name').textContent = dishName(s.level);
+        $('served-dish').textContent = `Table ${1 + (s.rng % 12)}.`;
+        $('served-ings').textContent = String(s.total ?? '—');
+        $('served-pinches').textContent = String(s.pieces);
+        $('served-chain').textContent = s.maxChain > 1 ? `×${s.maxChain}` : '—';
         $('served-score').textContent = s.score.toLocaleString();
+        $('served-best').textContent = was && s.score > was.best ? `New best for this dish — was ${was.best.toLocaleString()}` : '';
+        $('next').textContent = `Next order — ${dishName(s.level + 1)}`;
         renderHud();
         show('served');
         persistRun();
@@ -182,7 +222,9 @@ function drain(now) {
       case 'over':
         sfx('over');
         record();
-        $('over-dish').textContent = `${dishName(s.level)} — ${s.remaining} left to season.`;
+        $('over-order').textContent = `${orderNo(s.level)} · ${KITCHENS[prefs.kitchen].name}`;
+        $('over-name').textContent = dishName(s.level);
+        $('over-dish').textContent = `${s.remaining} left to season.`;
         $('over-score').textContent = s.score.toLocaleString();
         dropRun();
         show('over');
@@ -221,6 +263,7 @@ function fit() {
   const r = stage.getBoundingClientRect();
   const L = R.resize(Math.max(1, r.width), Math.max(1, r.height), s ? s.cols : 8, s ? s.rows : 16);
   stage.style.setProperty('--rail-h', `${L.hudH}px`);
+  stage.style.setProperty('--rail-w', `${Math.max(340, L.potW + L.cell * 4)}px`);
   if (loop && !loop.running()) loop.kick();
 }
 
@@ -241,13 +284,21 @@ async function boot() {
 
   const paintKitchen = segmented($('kitchen'), KITCHENS, () => prefs.kitchen, (i) => { prefs.kitchen = i; savePrefs(); });
   const paintFlame = segmented($('flame'), FLAMES, () => prefs.flame, (i) => { prefs.flame = i; savePrefs(); });
-  const paintLevel = () => { $('level').textContent = String(prefs.level + 1); };
+  const paintLevel = () => {
+    $('level-note').textContent = `Dish ${prefs.level + 1} · ${Core.stockCount(8, 16, prefs.level)} ingredients`;
+    $('level-dish').textContent = dishName(prefs.level);
+  };
   $('level-down').addEventListener('click', () => { prefs.level = Math.max(0, prefs.level - 1); paintLevel(); savePrefs(); });
   $('level-up').addEventListener('click', () => { prefs.level = Math.min(MAX_START - 1, prefs.level + 1); paintLevel(); savePrefs(); });
 
   function openMenu() {
     const run = Arcade.state.get('run');
-    $('continue').hidden = !(run && run.s && run.s.v === 1 && run.s.phase !== 'over');
+    const live = run && run.s && run.s.v === 1 && run.s.phase !== 'over';
+    $('continue').hidden = !live;
+    if (live) {
+      $('continue-order').textContent = `On the stove · ${orderNo(run.s.level)}`;
+      $('continue-dish').textContent = `Back to the ${dishName(run.s.level)}`;
+    }
     paintKitchen(); paintFlame(); paintLevel(); renderBest();
     s = null;
     show('menu');
@@ -283,6 +334,7 @@ async function boot() {
     active: () => mode === 'play',
   });
 
+  R.view.onArt = () => { if (!loop.running()) loop.kick(); };    // the painted art arrived
   new ResizeObserver(fit).observe(stage);
   fit();
 
@@ -296,7 +348,7 @@ async function boot() {
 
   // ?dev=1 — a handle for test drivers and the console; never for the game.
   if (new URLSearchParams(location.search).has('dev')) {
-    window.__pepper = { get s() { return s; }, get mode() { return mode; }, emit, Core };
+    window.__pepper = { get s() { return s; }, get mode() { return mode; }, get painted() { return R.view.painted; }, emit, Core };
   }
 
   openMenu();
