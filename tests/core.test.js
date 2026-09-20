@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  newGame, nextLevel, tick, command, at, findMatches, pieceCells, ghostY,
+  newGame, nextLevel, tick, command, at, findMatches, landingMatches, pieceCells, ghostY,
   ingredientRows, WILD, LINK, CLEAR_TICKS, SETTLE_TICKS, MILL_CAP,
 } from '../core.js';
 
@@ -201,3 +201,27 @@ test('soft drop locks on contact; a resting pinch gets slide time otherwise', ()
 });
 
 void CLEAR_TICKS; void SETTLE_TICKS;
+
+test('the tell names the run this drop would make, and leaves the pot alone', () => {
+  const s = empty();
+  for (const y of [13, 14, 15]) put(s, 3, y, 0);
+  s.piece = { x: 3, y: 0, o: 0, a: 0, b: 1 };          // Heat lands on column 3
+  const before = JSON.stringify(s);
+  assert.deepEqual([...landingMatches(s)].sort((a, b) => a - b), [12, 13, 14, 15].map((y) => y * s.cols + 3));
+  assert.equal(JSON.stringify(s), before, 'read-only');
+  s.piece.x = 5;
+  assert.equal(landingMatches(s).size, 0, 'nothing to tell over an empty column');
+});
+
+test('a dish remembers its size, its pinches and its longest chain', () => {
+  const s = newGame({ seed: 9, level: 2 });
+  assert.equal(s.total, 12);
+  assert.equal(s.total, s.remaining);
+  assert.equal(s.maxChain, 0);
+  const e = empty();
+  for (const y of [13, 14, 15]) put(e, 3, y, 0);
+  e.piece = { x: 3, y: 0, o: 0, a: 0, b: 1 };
+  command(e, 'hard');
+  run(e);
+  assert.equal(e.maxChain, 1);
+});

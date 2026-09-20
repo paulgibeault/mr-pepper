@@ -27,7 +27,7 @@ export const SOFT_TICKS = 2;        // rows fall this fast while soft-dropping
 export const LOCK_MIN_TICKS = 26;   // slide time on the ground, however hot the flame
 export const MILL_CAP = 5;
 const FLAME_BASE = [46, 30, 18];    // ticks per row: low, medium, high
-const FLAME_POINTS = [100, 200, 300];
+export const FLAME_POINTS = [100, 200, 300];   // per ingredient seasoned, before doubling
 const MIN_INTERVAL = 5;
 
 // ── seeded randomness (mulberry32, state kept in s.rng) ──────────────────
@@ -83,10 +83,15 @@ export function ingredientRows(rows, level) {
   return Math.max(2, rows - head);
 }
 
+/* How many ingredients a dish is stocked with. */
+export function stockCount(cols, rows, level) {
+  return Math.min(4 * (level + 1), Math.floor(cols * ingredientRows(rows, level) * 0.8));
+}
+
 function stock(s) {
   const h = ingredientRows(s.rows, s.level);
   const top = s.rows - h;
-  const want = Math.min(4 * (s.level + 1), Math.floor(s.cols * h * 0.8));
+  const want = stockCount(s.cols, s.rows, s.level);
   let placed = 0;
   for (let tries = 0; placed < want && tries < 4000; tries++) {
     const x = randInt(s, s.cols);
@@ -139,6 +144,7 @@ export function nextLevel(s) {
 function startLevel(s) {
   s.grid = new Array(s.cols * s.rows).fill(null);
   s.pieces = 0;
+  s.maxChain = 0;
   s.chain = 0;
   s.turnIngs = 0;
   s.soft = false;
@@ -146,6 +152,7 @@ function startLevel(s) {
   s.dying = [];
   s.t = 0;
   stock(s);
+  s.total = s.remaining;
   s.next = rollPinch(s);
   s.events.push({ type: 'level', level: s.level });
   spawn(s);
@@ -294,10 +301,24 @@ export function findMatches(s) {
   return hit;
 }
 
+/* The tell: every cell that would dissolve if the pinch in hand were dropped
+ * where it hangs — the landed halves included. Empty when it makes nothing.
+ * Reads the state, never writes it. */
+export function landingMatches(s) {
+  if (!s.piece || s.phase !== 'fall') return new Set();
+  const grid = s.grid.slice();
+  const dy = ghostY(s) - s.piece.y;
+  for (const [x, y, link, f] of pieceCells(s.piece)) {
+    if (y + dy >= 0) grid[idx(s, x, y + dy)] = { f, ing: false, link };
+  }
+  return findMatches({ ...s, grid });
+}
+
 function resolve(s) {
   const hit = findMatches(s);
   if (hit.size === 0) { endTurn(s); return; }
   s.chain++;
+  s.maxChain = Math.max(s.maxChain || 0, s.chain);
   let ings = 0;
   const flavors = [];
   for (const i of hit) {

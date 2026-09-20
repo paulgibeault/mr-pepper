@@ -1,22 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="steel" x1="0" x2="1"><stop offset="0" stop-color="#6b7077"/><stop offset=".15" stop-color="#c7ccd2"/><stop offset=".55" stop-color="#8d939a"/><stop offset="1" stop-color="#4a4e54"/></linearGradient>
-    <linearGradient id="red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb3b0"/><stop offset=".3" stop-color="#e5484d"/><stop offset="1" stop-color="#8a1c21"/></linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset=".3" stop-color="#f0b429"/><stop offset="1" stop-color="#8a5a00"/></linearGradient>
-  </defs>
-  <rect width="512" height="512" fill="#1a1412"/>
-  <g transform="rotate(-20 256 160)">
-    <path d="M196 160h120" stroke="#dccba4" stroke-width="16" stroke-linecap="round"/>
-    <circle cx="176" cy="160" r="80" fill="#8a1c21"/><circle cx="176" cy="160" r="63" fill="url(#red)"/>
-    <circle cx="336" cy="160" r="80" fill="#8a5a00"/><circle cx="336" cy="160" r="63" fill="url(#gold)"/>
-    <path d="M232 160h48" stroke="#dccba4" stroke-width="16" stroke-linecap="round"/>
-    <circle cx="256" cy="160" r="15" fill="#dccba4" stroke="rgba(0,0,0,.45)" stroke-width="4"/>
-    <path d="M176 116l32 44-32 44-32-44z" fill="rgba(20,10,5,.55)"/>
-    <circle cx="336" cy="160" r="30" fill="none" stroke="rgba(20,10,5,.55)" stroke-width="16"/>
-  </g>
-  <rect x="60" y="300" width="64" height="40" rx="14" fill="#4b4f55"/>
-  <rect x="388" y="300" width="64" height="40" rx="14" fill="#4b4f55"/>
-  <path d="M104 270h304v150a40 40 0 0 1-40 40H144a40 40 0 0 1-40-40z" fill="url(#steel)"/>
-  <rect x="92" y="262" width="328" height="26" rx="10" fill="#d5d9de"/>
-  <g fill="#ff9a3a"><path d="M150 500q-4-26 16-40 20 14 16 40z"/><path d="M240 500q-4-30 16-46 20 16 16 46z"/><path d="M330 500q-4-26 16-40 20 14 16 40z"/></g>
+<!-- Two pinch bowls, Heat and Herb, on a cord run through the brass rings on their rims. Flat on purpose. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Mr Pepper">
+<rect width="512" height="512" fill="#2a1c15"/>
+<path d="M0 360 L512 250 V512 H0 Z" fill="#b8452f"/>
+<g transform="rotate(-14 256 256)">
+<g transform="translate(10 16)" opacity="0.35"><circle cx="134" cy="256" r="100" fill="#000000"/><circle cx="378" cy="256" r="100" fill="#000000"/></g>
+<circle cx="134" cy="256" r="100" fill="#8a1c21"/><circle cx="134" cy="256" r="76" fill="#e5484d"/><path d="M46 226 A92 92 0 0 1 104 169" stroke="#ffb3b0" stroke-width="7" stroke-linecap="round" fill="none"/><g transform="translate(134 256) scale(1.5) translate(-50 -50)"><path d="M50 24 L69 50 L50 76 L31 50 Z" fill="#8a1c21"/></g><circle cx="378" cy="256" r="100" fill="#1c5a2b"/><circle cx="378" cy="256" r="76" fill="#46a758"/><path d="M290 226 A92 92 0 0 1 348 169" stroke="#b4ecbf" stroke-width="7" stroke-linecap="round" fill="none"/><g transform="translate(378 256) scale(1.5) translate(-50 -50)"><path d="M30 70 Q29 29 71 29 Q71 71 30 70 Z" fill="#1c5a2b"/></g><circle cx="224" cy="256" r="15" fill="#1d1512" stroke="#e3b04b" stroke-width="8"/><circle cx="288" cy="256" r="15" fill="#1d1512" stroke="#e3b04b" stroke-width="8"/>
+<path d="M224 256 L288 256 M256 256 L236 312 M256 256 L280 310" stroke="#efe4cf" stroke-width="13" stroke-linecap="round" fill="none"/>
+<circle cx="256" cy="256" r="17" fill="#efe4cf" stroke="#2a1c15" stroke-width="5"/>
+</g>
 </svg>
