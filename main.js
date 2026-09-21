@@ -332,6 +332,7 @@ async function boot() {
     emit, onPause: pause,
     cell: () => R.layout.cell,
     active: () => mode === 'play',
+    pieces: () => (s ? s.pieces : 0),
   });
 
   R.view.onArt = () => { if (!loop.running()) loop.kick(); };    // the painted art arrived
